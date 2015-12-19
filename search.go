@@ -27,6 +27,7 @@ type search struct {
 type searchPreload struct {
 	schema     string
 	conditions []interface{}
+	orders     []string
 }
 
 func (s *search) clone() *search {
@@ -58,7 +59,15 @@ func (s *search) Assign(attrs ...interface{}) *search {
 	s.assignAttrs = append(s.assignAttrs, toSearchableMap(attrs...))
 	return s
 }
-
+func (s *search) PreloadOrder(value string) *search {
+	if len(s.preload) > 0 {
+		last := len(s.preload)-1
+		if value != "" {
+			s.preload[last].orders = append(s.preload[last].orders, value)
+		}
+	}
+	return s
+}
 func (s *search) Order(value string, reorder ...bool) *search {
 	if len(reorder) > 0 && reorder[0] {
 		if value != "" {
@@ -114,7 +123,8 @@ func (s *search) Preload(schema string, values ...interface{}) *search {
 			preloads = append(preloads, preload)
 		}
 	}
-	preloads = append(preloads, searchPreload{schema, values})
+	var preloadOrders []string
+	preloads = append(preloads, searchPreload{schema, values, preloadOrders})
 	s.preload = preloads
 	return s
 }

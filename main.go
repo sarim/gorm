@@ -154,6 +154,10 @@ func (s *DB) Offset(value interface{}) *DB {
 	return s.clone().search.Offset(value).db
 }
 
+func (s *DB) PreloadOrder(value string) *DB {
+	return s.clone().search.PreloadOrder(value).db
+}
+
 func (s *DB) Order(value string, reorder ...bool) *DB {
 	return s.clone().search.Order(value, reorder...).db
 }

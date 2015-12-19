@@ -64,7 +64,7 @@ func Preload(scope *Scope) {
 				case "has_one":
 					currentScope.handleHasOnePreload(field, conditions)
 				case "has_many":
-					currentScope.handleHasManyPreload(field, conditions)
+					currentScope.handleHasManyPreload(field, conditions, preload.orders)
 				case "belongs_to":
 					currentScope.handleBelongsToPreload(field, conditions)
 				case "many_to_many":
@@ -138,7 +138,7 @@ func (scope *Scope) handleHasOnePreload(field *Field, conditions []interface{}) 
 	}
 }
 
-func (scope *Scope) handleHasManyPreload(field *Field, conditions []interface{}) {
+func (scope *Scope) handleHasManyPreload(field *Field, conditions []interface{}, orders []string) {
 	relation := field.Relationship
 	primaryKeys := scope.getColumnAsArray(relation.AssociationForeignFieldNames)
 	if len(primaryKeys) == 0 {
@@ -146,7 +146,11 @@ func (scope *Scope) handleHasManyPreload(field *Field, conditions []interface{})
 	}
 
 	results := makeSlice(field.Struct.Type)
-	scope.Err(scope.NewDB().Where(fmt.Sprintf("%v IN (%v)", toQueryCondition(scope, relation.ForeignDBNames), toQueryMarks(primaryKeys)), toQueryValues(primaryKeys)...).Find(results, conditions...).Error)
+	newDb := scope.NewDB()
+	for _, order := range orders {
+		newDb = newDb.Order(order)
+	}
+	scope.Err(newDb.Where(fmt.Sprintf("%v IN (%v)", toQueryCondition(scope, relation.ForeignDBNames), toQueryMarks(primaryKeys)), toQueryValues(primaryKeys)...).Find(results, conditions...).Error)
 	resultValues := reflect.Indirect(reflect.ValueOf(results))
 
 	if scope.IndirectValue().Kind() == reflect.Slice {
